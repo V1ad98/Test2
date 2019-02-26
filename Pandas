@@ -1,0 +1,50 @@
+import math
+import pandas as pd
+import numpy as np
+
+##### This is the actual binning function for numeric variables and factors. #####
+def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, stop_limit, abbrev_fact_levels, bad, good):
+    
+    #### Build subsets with target and predictor variable
+    df = pd.DataFrame([[target_var, pred_var]]) # used for final binning
+    dfrm = pd.DataFrame([[target_var, pred_var]], columns=['target_var', 'predictor_var']) # used for iterative merging of bins
+
+
+    #### Check if numerical variable or factor was provided as predictor and apply appropriate binning technique
+
+    ### Binning in case a numerical variable was selected
+    if len(dfrm.columns[0].drop_duplicates()) == 2 and (dfrm[dfrm.columns[1]].dtypes.kind in 'bifc') == True:
+        
+
+        ## Derive number of initial bins from min.perc.total parameter
+        max_bins = math.trunc(1/min_perc_total)
+
+        ## Derive cutpoints for bins (with similar frequency)
+        cutpoints = np.quantile(dfrm["predictor_var"], np.arange(0,max_bins+1)/max_bins)
+        innercutpoints = cutpoints[np.arange(2,len(cutpoints)-1)]   # remove outer (observed) boudaries
+        cutpoints = [-np.inf + innercutpoints + +np.inf]   # add -Inf, +Inf to cutpoints
+        cutpoints = cutpoints.drop_duplicates()   # remove multiple cutpoints with same value
+        
+        ## Calculate initial crosstab from binned variable and target variable
+        ## to identify and merge sparse bins
+        
+        # Compute binned variable from cutpoints and add it to the subset data frame
+        dfrm["predictor_var_binned"] = pd.cut(dfrm["predictor_var"], cutpoints, right=True, labels = None,
+            retbins=False, precision=10, include_lowest=False)
+    		
+        ##dfrm$predictor.var.binned <- cut(dfrm$predictor.var, cutpoints, labels = NULL,include.lowest = FALSE, right = TRUE, dig.lab = 10,ordered_result = TRUE)
+    
+    
+        # Compute crosstab from binned variable and target variable and covert it to a data frame
+        freq_table = table(dfrm[predictor_var_binned], dfrm[target.var], useNA="always")
+   ##? row.names(freq.table)[is.na(row.names(freq.table))] <- 'Missing'   # Replace NA in row.names with string 'Missing'
+    	woe_dfrm = dfrm.as_matrix(freq_table) # Convert frequency table to data frame
+    	woe_dfrm = woe_dfrm[['good', 'bad']]  # Select columns with raw frequencies only
+    	# Compute columns percents for target classes from crosstab frequencies
+    	woe_dfrm[col_perc_a] = woe_dfrm.columns[0]/sum(woe_dfrm.columns[0])
+    	woe_dfrm[col_perc_b] = woe_dfrm.columns[1]/sum(woe_dfrm.columns[1])
+    	# Correct column percents in case of 0 frequencies (in case of no NA skip last row)
+    
+    
+    
+woe_binning_2(df, target_var, pred_var, min_perc_total, min_perc_class, stop_limit, abbrev_fact_levels, bad, good)
