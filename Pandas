@@ -346,14 +346,11 @@ def woe_binning (df, target_var, pred_var, min_perc_total, min_perc_class, stop_
     df = df[df[target_var].isna()==False] 
     #### Call actual binning function and put binning solutions together with respective variable names into a list
     woe_binning_2(df, target_var, pred_var, min_perc_total, min_perc_class, stop_limit, abbrev_fact_levels, bad, good)
+    
     #### Read names and IV total values in the list and put them together with the binning tables
-    #names_of_pred_var = pred_var.apply(lambda x: x)
-    #iv_total_list = binning.apply(lambda x: x.mean(3))
-    #binning = pd.DataFrame(columns=["names_of_pred_var", "binning", "iv_total_list"])
     binning = pd.concat([(woe_dfrm_final["woe"]).reset_index(drop=False), look_up_table["cutpoints_final"].reset_index(drop=True), look_up_table["upper_cutpoints_final_dfrm"].reset_index(drop=True), look_up_table["iv_total_final"].reset_index(drop=True), look_up_table["good"].reset_index(drop=True), look_up_table["bad"].reset_index(drop=True), look_up_table["col_perc_a"].reset_index(drop=True), look_up_table["col_perc_b"].reset_index(drop=True), woe_dfrm_final["iv_bins"].reset_index(drop=True)], axis=1, sort=False).set_index(["predictor_var_binned"])
-    #### Sort via IV total
-    #binning = binning.sort((binning.iv_total_list.dtypes.kind in 'bifc') == True)
+
 
     
 #woe_binning (df, target_var, pred_var, min_perc_total, min_perc_class, stop_limit, abbrev_fact_levels, event_class)       
-woe_binning(df, 'credit_risk', 'duration', 0.05, 0.01, 0.1, 0, 'bad') 
+woe_binning(df, 'credit_risk', 'duration', 0.05, 0.01, 0.1, 0, 'bad')   
