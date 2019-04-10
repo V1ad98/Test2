@@ -8,6 +8,7 @@ germancredit = pd.read_csv('GermanCredit1.csv')
 df = germancredit[['credit_risk', 'amount','duration','savings','purpose']]
 
 def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, stop_limit, abbrev_fact_levels, bad, good):
+    global woe_dfrm
     global binning
     cutpoints_backup = False
     stop_limit_exceeded = False
@@ -30,12 +31,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
         
         ## Derive cutpoints for bins (with similar frequency)
         cutpoints = dfrm.predictor_var.quantile(np.arange(0,max_bins+1)/max_bins).reset_index(drop=True)
-        innercutpoints = cutpoints.replace(cutpoints[0], -np.inf)  # add -Inf to cutpoints
-        innercutpoints = innercutpoints.replace(cutpoints[len(cutpoints)-1], +np.inf)  # add +Inf to cutpoints
-        innercutpoints = innercutpoints.round(2)
-        innercutpoints = innercutpoints.drop_duplicates() # remove multiple cutpoints with same value
-        cutpoints = list(innercutpoints)
-        
+        innercutpoints = [-np.inf] + list(cutpoints[1:len(cutpoints)-1]) + [np.inf]  # add -Inf, +Inf to cutpoints
+        cutpoints = list(dict.fromkeys(innercutpoints))
         
         ## Calculate initial crosstab from binned variable and target variable
         ## to identify and merge sparse bins
@@ -49,7 +46,7 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
     
         # Compute crosstab from binned variable and target variable and covert it to a data frame
         freq_table = pd.crosstab(dfrm["predictor_var_binned"],dfrm["target_var"], dropna=True)
-        
+        print(freq_table)
         freq_table = freq_table.reset_index(drop=False)
         missing=pd.DataFrame({'predictor_var_binned': ["Missing"],
                               0.0: [dfrm.isnull().sum(axis = 0)[0]],
@@ -60,8 +57,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
         
         #woe_dfrm = woe_dfrm[['good', 'bad']]  # Select columns with raw frequencies only
         # Compute columns percents for target classes from crosstab frequencies
-        woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-        woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+        woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+        woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
         
         # Correct column percents in case of 0 frequencies (in case of no NA skip last row)
         if df.iloc[:,1].isnull().values.any()==False:
@@ -94,8 +91,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
                 woe_dfrm = woe_dfrm.set_index(["predictor_var_binned"])
                 #woe_dfrm = woe_dfrm[['good', 'bad']]  # Select columns with raw frequencies only
                 # Compute columns percents for target classes from crosstab frequencies
-                woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-                woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+                woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+                woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
                 # Correct column percents in case of 0 frequencies (in case of no NA skip last row)
                 if df.iloc[:,1].isnull().values.any()==False:
                     if min(woe_dfrm.iloc[:,0].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0 or min(woe_dfrm.iloc[:,1].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0:
@@ -129,8 +126,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
                 woe_dfrm = woe_dfrm.set_index(["predictor_var_binned"])
                 #woe_dfrm = woe_dfrm[['good', 'bad']]  # Select columns with raw frequencies only
                 # Compute columns percents for target classes from crosstab frequencies
-                woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-                woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+                woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+                woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
                 # Correct column percents in case of 0 frequencies (in case of no NA skip last row)
                 if df.iloc[:,1].isnull().values.any()==False:
                     if min(woe_dfrm.iloc[:,0].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0 or min(woe_dfrm.iloc[:,1].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0:
@@ -162,8 +159,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
             woe_dfrm = woe_dfrm.set_index(["predictor_var_binned"])
             #woe_dfrm = woe_dfrm[['good', 'bad']]  # Select columns with raw frequencies only
             # Compute columns percents for target classes from crosstab frequencies
-            woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-            woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+            woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+            woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
             # Correct column percents in case of 0 frequencies (in case of no NA skip last row)
             if df.iloc[:,1].isnull().values.any()==False:
                 if min(woe_dfrm.iloc[:,0].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0 or min(woe_dfrm.iloc[:,1].drop(woe_dfrm.index[len(woe_dfrm)-1]))==0:
@@ -246,9 +243,9 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
         look_up_table = pd.concat([look_up_table, woe_dfrm_final.iloc[:,0], woe_dfrm_final.iloc[:,1], woe_dfrm_final.iloc[:,2], woe_dfrm_final.iloc[:,6]], axis=1) # add column with final total Information Value
         look_up_table["iv_total_final"] = look_up_table["iv_total_final"].fillna(method = 'ffill')
         
-        if bad == "0" and good == "1":
+        if bad == 0 and good == 1:
             look_up_table = look_up_table.rename(index=str, columns={0: "bad", 1: "good"})
-        elif good == "0" and bad=="1":    
+        elif good == 0 and bad==1:    
             look_up_table = look_up_table.rename(index=str, columns={0: "good", 1: "bad"})  
         
         binning = pd.concat([(woe_dfrm_final["woe"]).reset_index(drop=False), look_up_table["cutpoints_final"].reset_index(drop=True), look_up_table["upper_cutpoints_final_dfrm"].reset_index(drop=True), look_up_table["iv_total_final"].reset_index(drop=True), look_up_table["good"].reset_index(drop=True), look_up_table["bad"].reset_index(drop=True), look_up_table["col_perc_a"].reset_index(drop=True), look_up_table["col_perc_b"].reset_index(drop=True), woe_dfrm_final["iv_bins"].reset_index(drop=True)], axis=1, sort=False).set_index(["predictor_var_binned"])
@@ -287,8 +284,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
         freq_table = pd.crosstab(dfrm["predictor_var_binned"],dfrm["target_var"])
         woe_dfrm = pd.DataFrame(freq_table) # Convert frequency table to data frame
         # Compute WOE and information value (IV) from crosstab frequencies
-        woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-        woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+        woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+        woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
         
         # Correct column percents in case of 0 frequencies
         if min(woe_dfrm.iloc[:,0])==0 or min(woe_dfrm.iloc[:,1])==0:
@@ -329,8 +326,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
             freq_table = pd.crosstab(dfrm["predictor_var_binned"],dfrm["target_var"])
             woe_dfrm = pd.DataFrame(freq_table) # Convert frequency table to data frame
             # Compute WOE and information value (IV) from crosstab frequencies
-            woe_dfrm["col_perc_a"] = woe_dfrm[int(good)]/sum(woe_dfrm[int(good)])
-            woe_dfrm["col_perc_b"] = woe_dfrm[int(bad)]/sum(woe_dfrm[int(bad)])
+            woe_dfrm["col_perc_a"] = woe_dfrm[good]/sum(woe_dfrm[good])
+            woe_dfrm["col_perc_b"] = woe_dfrm[bad]/sum(woe_dfrm[bad])
         
             # Correct column percents in case of 0 frequencies
             if min(woe_dfrm.iloc[:,0])==0 or min(woe_dfrm.iloc[:,1])==0:
@@ -432,8 +429,8 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
         woe_dfrm_final = pd.DataFrame(freq_table_final) # Convert frequency table to data frame
     
         # Compute WOE and information value (IV) from crosstab frequencies
-        woe_dfrm_final["col_perc_a"] = woe_dfrm_final[int(good)]/sum(woe_dfrm_final[int(good)])
-        woe_dfrm_final["col_perc_b"] = woe_dfrm_final[int(bad)]/sum(woe_dfrm_final[int(bad)])
+        woe_dfrm_final["col_perc_a"] = woe_dfrm_final[good]/sum(woe_dfrm_final[good])
+        woe_dfrm_final["col_perc_b"] = woe_dfrm_final[bad]/sum(woe_dfrm_final[bad])
         # Correct column percents in case of 0 frequencies
         if min(woe_dfrm_final.iloc[:,0])==0 or min(woe_dfrm_final.iloc[:,1])==0:
                 woe_dfrm_final["col_perc_a"] = (woe_dfrm_final["col_perc_a"] + 0.0001)/sum(woe_dfrm_final["col_perc_a"] + 0.0001)
@@ -491,9 +488,9 @@ def woe_binning_2 (df, target_var, pred_var, min_perc_total, min_perc_class, sto
             abbrev_fact_levels = 1000
     
             
-        if bad == "0" and good == "1":
+        if bad == 0 and good == 1:
             look_up_table = look_up_table.rename(index=str, columns={0: "bad", 1: "good"})
-        elif good == "0" and bad=="1":    
+        elif good == 0 and bad== 1:    
             look_up_table = look_up_table.rename(index=str, columns={0: "good", 1: "bad"})  
             
         binning=look_up_table    
@@ -556,24 +553,24 @@ def woe_binning (df, target_var, pred_var, min_perc_total, min_perc_class, stop_
 
     #### Display warning message in case none of the target classes matches the specified event.class parameter
     if pd.isnull(event_class)==False:
-        if df[target_var].drop_duplicates()[0]==event_class or df[target_var].drop_duplicates()[1]==event_class==False:
+        if df[target_var].drop_duplicates().iloc[0]==event_class or df[target_var].drop_duplicates().iloc[1]==event_class==False:
             warnings.warn("None of the target classes matches the specified event.class parameter.")
     
     #### In case bad class was specified assign 'good' and 'bad' codes (the latter will be associated with negative WOE values then)
     if pd.isnull(event_class)==False: 
-        if df[target_var].drop_duplicates()[0]==event_class:
-            bad = df[target_var].drop_duplicates()[0]
-            good = df[target_var].drop_duplicates()[1]
+        if df[target_var].drop_duplicates().iloc[0]==event_class:
+            bad = df[target_var].drop_duplicates().iloc[0]
+            good = df[target_var].drop_duplicates().iloc[1]
         else:
-            bad = df[target_var].drop_duplicates()[1]
-            good = df[target_var].drop_duplicates()[0]
+            bad = df[target_var].drop_duplicates().iloc[1]
+            good = df[target_var].drop_duplicates().iloc[0]
             
     else:
-        bad = df[target_var].drop_duplicates()[0]
-        good = df[target_var].drop_duplicates()[1]
+        bad = df[target_var].drop_duplicates().iloc[0]
+        good = df[target_var].drop_duplicates().iloc[1]
         
-    bad = str(bad)
-    good = str(good)
+    bad = int(bad)
+    good = int(good)
     
     #### Gather names and look-up tables (with binned classes and WOE values) for each predictor variable in a list
     #if  isinstance(pred_var, pd.DataFrame)==True:
